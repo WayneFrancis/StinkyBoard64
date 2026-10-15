@@ -426,8 +426,7 @@ internal sealed class MacroHostForm : Form
     private void ConfirmHideToTray()
     {
         if (_hook is null) return;
-        if (MessageBox.Show(this,
-            "Windows 11 may put the MacroHost notification icon under " +
+        if (MessageBox.Show(this, "Windows 11 may put the MacroHost notification icon under " +
             "'^' (Show hidden icons) beside the clock.\n\n" +
             "Have you confirmed that you can find the blue information icon " +
             "and its Show MacroHost / Stop interception context menu?\n\n" +

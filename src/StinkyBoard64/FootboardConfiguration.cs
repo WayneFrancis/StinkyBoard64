@@ -137,13 +137,20 @@ public static class BasicHidKeys
                      new("Insert", 0x49),  
                      new("Home", 0x4A), 
                      new("Page Up", 0x4B),
-                     new("Delete", 0x4C), new("End", 0x4D), new("Page Down", 0x4E),
-            new("Right Arrow", 0x4F), new("Left Arrow", 0x50),
-            new("Down Arrow", 0x51), new("Up Arrow", 0x52),
-            new("Numpad /", 0x54), new("Numpad *", 0x55),
-            new("Numpad -", 0x56), new("Numpad +", 0x57),
-            new("Numpad Enter", 0x58), new("Numpad .", 0x63),
-            new("Applications / Menu", 0x65)
+                     new("Delete", 0x4C), 
+                     new("End", 0x4D), 
+                     new("Page Down", 0x4E),
+                     new("Right Arrow", 0x4F), 
+                     new("Left Arrow", 0x50),
+                     new("Down Arrow", 0x51),
+                     new("Up Arrow", 0x52),
+                     new("Numpad /", 0x54),
+                     new("Numpad *", 0x55),
+                     new("Numpad -", 0x56),
+                     new("Numpad +", 0x57),
+                     new("Numpad Enter", 0x58),
+                     new("Numpad .", 0x63),
+                     new("Applications / Menu", 0x65)
     ]);
     for (int i = 1; i <= 12; i++)
       values.Add(new HidKeyOption($"F{i}", (byte)(0x39 + i)));
@@ -162,11 +169,8 @@ public static class StinkyModifiers
   public static string Describe(byte mask)
   {
     if (mask == 0) return "None";
-    string[] names = ["LCtrl", "LShift", "LAlt", "LWin",
-                          "RCtrl", "RShift", "RAlt", "RWin"];
-    return string.Join(" + ", Enumerable.Range(0, 8)
-        .Where(bit => (mask & (1 << bit)) != 0)
-        .Select(bit => names[bit]));
+    string[] names = ["LCtrl", "LShift", "LAlt", "LWin", "RCtrl", "RShift", "RAlt", "RWin"];
+    return string.Join(" + ", Enumerable.Range(0, 8).Where(bit => (mask & (1 << bit)) != 0).Select(bit => names[bit]));
   }
 }
 
