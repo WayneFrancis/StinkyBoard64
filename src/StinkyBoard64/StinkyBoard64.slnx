@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="StinkyBoard64.csproj" />
+  <Project Path="../StinkyBoard64.MacroCore/StinkyBoard64.MacroCore.csproj" />
+  <Project Path="../StinkyBoard64.MacroHost/StinkyBoard64.MacroHost.csproj" />
+  <Project Path="../../tests/StinkyBoard64.MacroTests/StinkyBoard64.MacroTests.csproj" />
 </Solution>

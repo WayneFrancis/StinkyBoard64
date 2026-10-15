@@ -1,7 +1,9 @@
-name: Build
+name: Build and test Windows editor and Macro Host
+
 on:
   push:
   pull_request:
+
 jobs:
   windows:
     runs-on: windows-latest
@@ -10,5 +12,30 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - run: dotnet restore src/StinkyBoard64/StinkyBoard64.csproj
-      - run: dotnet build src/StinkyBoard64/StinkyBoard64.csproj --configuration Release --no-restore
+
+      - name: Build StinkyBoard64 editor
+        run: dotnet build src/StinkyBoard64/StinkyBoard64.csproj --configuration Release
+
+      - name: Build standalone Macro Host
+        run: dotnet build src/StinkyBoard64.MacroHost/StinkyBoard64.MacroHost.csproj --configuration Release
+
+      - name: Verify Windows SendInput native layout
+        run: dotnet run --project src/StinkyBoard64.MacroHost --configuration Release --no-build -- --check-input-layout
+
+      - name: Test macro models, triggers and JSON
+        run: dotnet test tests/StinkyBoard64.MacroTests/StinkyBoard64.MacroTests.csproj --configuration Release
+
+      - name: Publish portable Windows x64 applications
+        shell: pwsh
+        run: |
+          dotnet publish src/StinkyBoard64/StinkyBoard64.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o portable/Editor
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet publish src/StinkyBoard64.MacroHost/StinkyBoard64.MacroHost.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o portable/MacroHost
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Compress-Archive -Path portable/* -DestinationPath StinkyBoard64-Windows-x64.zip -Force
+
+      - name: Upload portable editor and Macro Host
+        uses: actions/upload-artifact@v4
+        with:
+          name: StinkyBoard64-Windows-x64
+          path: StinkyBoard64-Windows-x64.zip

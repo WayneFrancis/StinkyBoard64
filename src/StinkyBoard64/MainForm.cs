@@ -27,6 +27,7 @@ internal sealed class MainForm : Form
     private readonly Button _read = new() { Text = "Read selected", AutoSize = true };
     private readonly Button _load = new() { Text = "Load JSON", AutoSize = true };
     private readonly Button _save = new() { Text = "Save JSON", AutoSize = true };
+    private readonly Button _macroHost = new() { Text = "Open Macro Host", AutoSize = true };
     private readonly Button _write = new()
     {
         Text = "Write to selected board", AutoSize = true,
@@ -91,7 +92,7 @@ internal sealed class MainForm : Form
         {
             Dock = DockStyle.Fill, WrapContents = false
         };
-        actionRow.Controls.AddRange([_read, _load, _save, _write]);
+        actionRow.Controls.AddRange([_read, _load, _save, _write, _macroHost]);
         root.Controls.Add(actionRow, 0, 1);
 
         var grid = new TableLayoutPanel
@@ -171,9 +172,81 @@ internal sealed class MainForm : Form
         _load.Click += (_, _) => LoadJson();
         _save.Click += (_, _) => SaveJson();
         _write.Click += async (_, _) => await WriteSelectedAsync();
+        _macroHost.Click += (_, _) => OpenMacroHost();
 
         ShowSelected();
         Shown += async (_, _) => await RefreshAllAsync();
+    }
+
+    private void OpenMacroHost()
+    {
+        // The Macro Host is an independent, opt-in process; opening its UI
+        // NEVER starts interception automatically or changes board EEPROM.
+        // In a source checkout always build/run from source so a previous
+        // bin/Debug executable cannot shadow the code just pulled.
+        string sourceProject = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..",
+            "StinkyBoard64.MacroHost", "StinkyBoard64.MacroHost.csproj"));
+
+        if (File.Exists(sourceProject))
+        {
+            try
+            {
+                var info = new ProcessStartInfo("dotnet")
+                {
+                    WorkingDirectory = Path.GetDirectoryName(sourceProject)!,
+                    UseShellExecute = true
+                };
+                info.ArgumentList.Add("run");
+                info.ArgumentList.Add("--project");
+                info.ArgumentList.Add(sourceProject);
+                Process.Start(info);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    "Could not start the Macro Host project:\n\n" + ex.Message +
+                    "\n\nFrom the repository directory try:\n" +
+                    "dotnet run --project src/StinkyBoard64.MacroHost",
+                    "Macro Host launch failed", MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            return;
+        }
+
+        // Portable release layout: Editor/StinkyBoard64.exe and
+        // MacroHost/StinkyBoard64.MacroHost.exe, with no SDK required.
+        string? hostExe = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "StinkyBoard64.MacroHost.exe"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
+                "..", "MacroHost", "StinkyBoard64.MacroHost.exe"))
+        }.FirstOrDefault(File.Exists);
+
+        if (hostExe is null)
+        {
+            MessageBox.Show(this,
+                "Macro Host wasn't found beside the editor. Use the complete " +
+                "portable package or run from the source checkout:\n\n" +
+                "dotnet run --project src/StinkyBoard64.MacroHost",
+                "Macro Host not installed", MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(hostExe)
+            {
+                WorkingDirectory = Path.GetDirectoryName(hostExe)!,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Could not open Macro Host",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private static bool OriginalRunning() =>
